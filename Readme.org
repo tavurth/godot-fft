@@ -14,3 +14,13 @@ result = FFT.icfft(result)
 for item in result:
 	item.log()
 #+end_src
+
+** Notes
+
+This is an in-place modification for speed, so if you want to ensure functional purity you can duplicate your data array before passing it into the ~fft~ or ~ifft~ functionality. The data array is also returned.
+
+#+begin_src gdscript
+var my_arr = [1, 1, 1, 1, 0, 0, 0, 0]
+var result = FFT.cfft(my_arr.duplicate(true))
+# my_arr remains unchanged
+#+end_src
