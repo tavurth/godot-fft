@@ -35,25 +35,25 @@ var result = FFT.cfft(my_arr.duplicate(true))
 
 *** Public methods
 
-~FFT.fft(data: Array<float>) -> Array<Complex>~
+**** ~FFT.fft(data: Array<float>) -> Array<Complex>~
 Forward transformation from data-space into fourier-space.
 
-~FFT.ifft(data: Array<Complex>) -> Array<Complex>~
+**** ~FFT.ifft(data: Array<Complex>) -> Array<Complex>~
 Reverse transformation from fourier-space into data-space.
 
-~FFT.reals(data: Array<Complex>) -> Array<float>~
+**** ~FFT.reals(data: Array<Complex>) -> Array<float>~
 Returns the real part of each data point.
 
-~FFT.imags(data: Array<Complex>) -> Array<float>~
+**** ~FFT.imags(data: Array<Complex>) -> Array<float>~
 Returns the imaginary part of each data point.
 
-~FFT.ensure_complex(data: Array<MaybeComplex>) -> Array<Complex>~
+**** ~FFT.ensure_complex(data: Array<MaybeComplex>) -> Array<Complex>~
 Ensure that all data items in the array are Complex numbers.
 
 *** Internal methods
 
-~FFT.conjugate(amplitudes: Array<Complex>) -> Array<Complex>~
+**** ~FFT.conjugate(amplitudes: Array<Complex>) -> Array<Complex>~
 Flips the sign of each amplitude
 
-~FFT.keyed(data: Array<Dictionary>, key: String) -> Data<Any>~
+**** ~FFT.keyed(data: Array<Dictionary>, key: String) -> Data<Any>~
 Returns data[idx][key] for each index.
