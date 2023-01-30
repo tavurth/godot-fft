@@ -8,6 +8,18 @@ extends Node
 
 const Complex = preload("Complex.gd")
 
+static func ensure_complex(maybe_complexes: Array) -> Array:
+	var to_return = []
+
+	for item in maybe_complexes:
+		if not item is Complex:
+			item = Complex.new(item)
+
+		to_return.append(item)
+
+	return to_return
+
+
 static func conjugate(amplitudes: Array) -> Array:
 	# conjugate if imaginary part is not 0
 	for i in range(0, len(amplitudes)):
