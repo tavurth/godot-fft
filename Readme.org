@@ -1,15 +1,21 @@
 #+title: Godot-fft
 
+[[./images/icon_long.png]]
+
 Fast Fourier Transform in GDScript
 
 Mostly modified from [[https://rosettacode.org/wiki/Fast_Fourier_transform#JavaScript][The javascript FFT on rosetta code]].
 
-** Usage
+** Installation
 
 1. Install addon
+2. Enable plugin from the project-settings
+
+The singleton ~FFT~ is autoloaded at your project start, so you can simply call the static functionality as shown below.
+
 #+begin_src gdscript
-var result = FFT.cfft([1, 1, 1, 1, 0, 0, 0, 0])
-result = FFT.icfft(result)
+var result = FFT.fft([1, 1, 1, 1, 0, 0, 0, 0])
+result = FFT.cfft(result)
 
 for item in result:
 	item.log()
@@ -24,3 +30,30 @@ var my_arr = [1, 1, 1, 1, 0, 0, 0, 0]
 var result = FFT.cfft(my_arr.duplicate(true))
 # my_arr remains unchanged
 #+end_src
+
+** Reference
+
+*** Public methods
+
+~FFT.fft(data: Array<float>) -> Array<Complex>~
+Forward transformation from data-space into fourier-space.
+
+~FFT.ifft(data: Array<Complex>) -> Array<Complex>~
+Reverse transformation from fourier-space into data-space.
+
+~FFT.reals(data: Array<Complex>) -> Array<float>~
+Returns the real part of each data point.
+
+~FFT.imags(data: Array<Complex>) -> Array<float>~
+Returns the imaginary part of each data point.
+
+~FFT.ensure_complex(data: Array<MaybeComplex>) -> Array<Complex>~
+Ensure that all data items in the array are Complex numbers.
+
+*** Internal methods
+
+~FFT.conjugate(amplitudes: Array<Complex>) -> Array<Complex>~
+Flips the sign of each amplitude
+
+~FFT.keyed(data: Array<Dictionary>, key: String) -> Data<Any>~
+Returns data[idx][key] for each index.
