@@ -29,6 +29,26 @@ static func conjugate(amplitudes: Array) -> Array:
 	return amplitudes
 
 
+static func keyed(amplitudes: Array, key: String) -> Array:
+	var to_return = []
+
+	for item in amplitudes:
+		if not item is Complex:
+			item = Complex.new(item)
+
+		to_return.append(item[key])
+
+	return to_return
+
+
+static func reals(amplitudes: Array) -> Array:
+	return keyed(amplitudes, "re")
+
+
+static func imags(amplitudes: Array) -> Array:
+	return keyed(amplitudes, "im")
+
+
 static func ifft(amplitudes: Array) -> Array:
 	var N = len(amplitudes)
 	var iN = 1.0 / N
