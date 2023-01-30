@@ -1,0 +1,16 @@
+#+title: Godot-fft
+
+Fast Fourier Transform in GDScript
+
+Mostly modified from [[https://rosettacode.org/wiki/Fast_Fourier_transform#JavaScript][The javascript FFT on rosetta code]].
+
+** Usage
+
+1. Install addon
+#+begin_src gdscript
+var result = FFT.cfft([1, 1, 1, 1, 0, 0, 0, 0])
+result = FFT.icfft(result)
+
+for item in result:
+	item.log()
+#+end_src
