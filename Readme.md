@@ -35,7 +35,7 @@ The singleton `FFT` is autoloaded at your project start, so you can simply call 
 
 ```gdscript
     var result = FFT.fft([1, 1, 1, 1, 0, 0, 0, 0])
-    result = FFT.cfft(result)
+    result = FFT.fft(result)
 
     for item in result:
     	item.log()
@@ -49,7 +49,7 @@ This is an in-place modification for speed, so if you want to ensure functional 
 
 ```gdscript
     var my_arr = [1, 1, 1, 1, 0, 0, 0, 0]
-    var result = FFT.cfft(my_arr.duplicate(true))
+    var result = FFT.fft(my_arr.duplicate(true))
     # my_arr remains unchanged
 ```
 
