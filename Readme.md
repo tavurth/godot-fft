@@ -61,6 +61,40 @@ How fast is it?
 
 Not so fast, but this can be used as an example to convert to C++, or for situations where you don't need to calculate every frame.
 
+Alternately you can sample the data, so instead of taking every item you can take every `{5th}` item.
+
+This should also be thread safe, so you can run it in the background quite easily using:
+
+```gdscript
+var _mutex := Mutex.new()
+var _thread := Thread.new()
+var _terminated := false
+
+var my_data := []
+
+func _thread_runner() -> void:
+    while not self._terminated:
+        OS.delay_msec(100)
+        mutex.lock()
+        FTT.ftt(my_data)
+        mutex.unlock()
+
+func _exit_tree() -> void:
+    self.terminated = true
+    self._thread.wait_to_finish()
+
+func _ready() -> void:a
+    thread.start(Callable(self, "_thread_runner"))
+
+func _process(_delta: float) -> void:
+    if not _mutex.try_lock():
+        return
+
+    print(my_data)
+    self._mutex.unlock()
+
+```
+
 <a id="org59f1579"></a>
 
 # Reference
