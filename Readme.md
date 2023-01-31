@@ -53,6 +53,14 @@ This is an in-place modification for speed, so if you want to ensure functional 
     # my_arr remains unchanged
 ```
 
+How fast is it?
+
+```shell
+288.375 ms per 5,000 items.
+```
+
+Not so fast, but this can be used as an example to convert to C++, or for situations where you don't need to calculate every frame.
+
 <a id="org59f1579"></a>
 
 # Reference
