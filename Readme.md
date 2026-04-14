@@ -1,4 +1,4 @@
-![img](https://github.com/user-attachments/assets/50138c52-8833-4807-abe6-79773c4d1f1f)
+<img width="1376" height="768" alt="image" src="https://github.com/user-attachments/assets/7b7fb70f-4de0-4462-94ba-534551d6a42b" />
 
 [![img](https://awesome.re/mentioned-badge.svg)](https://github.com/godotengine/awesome-godot)
 ![img](https://img.shields.io/github/license/tavurth/godot-simple-fps-camera.svg)
