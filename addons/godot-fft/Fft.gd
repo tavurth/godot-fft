@@ -10,11 +10,7 @@ var _mutex := Mutex.new()
 
 
 func _twiddle_table(n: int) -> PackedFloat64Array:
-	if _twiddles.has(n):
-		return _twiddles[n]
-
 	_mutex.lock()
-	# double-check after acquiring: another thread may have beaten us
 	if not _twiddles.has(n):
 		var table := PackedFloat64Array()
 		table.resize(n)
@@ -23,13 +19,17 @@ func _twiddle_table(n: int) -> PackedFloat64Array:
 			table[k * 2] = cos(a * k)
 			table[k * 2 + 1] = sin(a * k)
 		_twiddles[n] = table
+	var result = _twiddles[n]
 	_mutex.unlock()
-
-	return _twiddles[n]
+	return result
 
 
 func _bit_reverse_permute(data: PackedFloat64Array, n: int) -> void:
-	var bits := int(log(n) / log(2))
+	var bits := 0
+	var tmp := n - 1
+	while tmp > 0:
+		bits += 1
+		tmp >>= 1
 
 	for i in range(n):
 		var j := 0
@@ -37,13 +37,14 @@ func _bit_reverse_permute(data: PackedFloat64Array, n: int) -> void:
 		for _b in range(bits):
 			j = (j << 1) | (x & 1)
 			x >>= 1
-		if j > i:
-			var re_i := data[i * 2]
-			var im_i := data[i * 2 + 1]
-			data[i * 2] = data[j * 2]
-			data[i * 2 + 1] = data[j * 2 + 1]
-			data[j * 2] = re_i
-			data[j * 2 + 1] = im_i
+		if j <= i:
+			continue
+		var re_i := data[i * 2]
+		var im_i := data[i * 2 + 1]
+		data[i * 2] = data[j * 2]
+		data[i * 2 + 1] = data[j * 2 + 1]
+		data[j * 2] = re_i
+		data[j * 2 + 1] = im_i
 
 
 func to_packed(reals: Array) -> PackedFloat64Array:
@@ -113,7 +114,7 @@ func fft(data) -> PackedFloat64Array:
 				packed[v_idx] = ur - tr
 				packed[v_idx + 1] = ui - ti
 
-		half_m = m
+		half_m *= 2
 
 	return packed
 
@@ -125,7 +126,7 @@ func ifft(data) -> PackedFloat64Array:
 	for i in range(n):
 		packed[i * 2 + 1] = -packed[i * 2 + 1]
 
-	fft(packed)
+	packed = fft(packed)
 
 	var inv_n := 1.0 / n
 	for i in range(n):
