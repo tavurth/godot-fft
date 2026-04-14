@@ -53,13 +53,14 @@ This is an in-place modification for speed, so if you want to ensure functional 
     # my_arr remains unchanged
 ```
 
-How fast is it?
+## How fast is it?
 
 ```shell
-288.375 ms per 5,000 items.
+fft(1024) x100: 134883 us total, 1348.8 us/call
 ```
 
-Not so fast, but this can be used as an example to convert to C++, or for situations where you don't need to calculate every frame.
+~12x faster than the original recursive implementation, using iterative Cooley-Tukey
+with precomputed twiddle factors and `PackedFloat64Array` for zero-allocation butterflies.
 
 Alternately you can sample the data, so instead of taking every item you can take every `{5th}` item.
 

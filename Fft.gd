@@ -1,114 +1,135 @@
-# complex fast fourier transform and inverse from
+# Fast Fourier Transform - iterative Cooley-Tukey radix-2 DIT
+# Input/output: PackedFloat64Array interleaved [re0, im0, re1, im1, ...]
 # http://rosettacode.org/wiki/Fast_Fourier_transform#C.2B.2B
-
-# basic complex number arithmetic from
-# http://rosettacode.org/wiki/Fast_Fourier_transform#Scala
 
 extends Node
 
-const Complex = preload("Complex.gd")
+static var _twiddles: Dictionary = {}
+
+static var _mutex := Mutex.new()
 
 
-static func ensure_complex(maybe_complexes: Array) -> Array:
-	var to_return = []
+static func _twiddle_table(n: int) -> PackedFloat64Array:
+	if _twiddles.has(n):
+		return _twiddles[n]
 
-	for item in maybe_complexes:
-		if not item is Complex:
-			item = Complex.new(item)
+	_mutex.lock()
+	# double-check after acquiring — another thread may have beaten us
+	if not _twiddles.has(n):
+		var table := PackedFloat64Array()
+		table.resize(n)
+		var a := -2.0 * PI / n
+		for k in range(n / 2):
+			table[k * 2] = cos(a * k)
+			table[k * 2 + 1] = sin(a * k)
+		_twiddles[n] = table
+	_mutex.unlock()
 
-		to_return.append(item)
-
-	return to_return
-
-
-static func conjugate(amplitudes: Array) -> Array:
-	# conjugate if imaginary part is not 0
-	for i in range(0, len(amplitudes)):
-		if amplitudes[i] is Complex:
-			amplitudes[i].im = -amplitudes[i].im
-
-	return amplitudes
+	return _twiddles[n]
 
 
-static func keyed(amplitudes: Array, key: String) -> Array:
-	var to_return = []
+static func _bit_reverse_permute(data: PackedFloat64Array, n: int) -> void:
+	var bits := int(log(n) / log(2))
 
-	for item in amplitudes:
-		if not item is Complex:
-			item = Complex.new(item)
-
-		to_return.append(item[key])
-
-	return to_return
-
-
-static func reals(amplitudes: Array) -> Array:
-	return keyed(amplitudes, "re")
-
-
-static func imags(amplitudes: Array) -> Array:
-	return keyed(amplitudes, "im")
+	for i in range(n):
+		var j := 0
+		var x := i
+		for _b in range(bits):
+			j = (j << 1) | (x & 1)
+			x >>= 1
+		if j > i:
+			var re_i := data[i * 2]
+			var im_i := data[i * 2 + 1]
+			data[i * 2] = data[j * 2]
+			data[i * 2 + 1] = data[j * 2 + 1]
+			data[j * 2] = re_i
+			data[j * 2 + 1] = im_i
 
 
-static func ifft(amplitudes: Array) -> Array:
-	var N = len(amplitudes)
-	var iN = 1.0 / N
-
-	conjugate(amplitudes)
-
-	# apply fourier transform
-	amplitudes = fft(amplitudes)
-
-	conjugate(amplitudes)
-
-	for i in range(0, N):
-		if not amplitudes[i] is Complex:
-			continue
-
-		# scale
-		amplitudes[i].re *= iN
-		amplitudes[i].im *= iN
-
-	return amplitudes
+static func to_packed(reals: Array) -> PackedFloat64Array:
+	var out := PackedFloat64Array()
+	out.resize(reals.size() * 2)
+	for i in range(reals.size()):
+		out[i * 2] = float(reals[i])
+		out[i * 2 + 1] = 0.0
+	return out
 
 
-static func fft(amplitudes: Array) -> Array:
-	var N = len(amplitudes)
-	if N <= 1:
-		return amplitudes
+static func to_reals(data: PackedFloat64Array) -> PackedFloat64Array:
+	var out := PackedFloat64Array()
+	out.resize(data.size() / 2)
+	for i in range(out.size()):
+		out[i] = data[i * 2]
+	return out
 
-	var hN = N / 2
-	var even = []
-	var odd = []
 
-	even.resize(hN)
-	odd.resize(hN)
+static func pretty(data: PackedFloat64Array) -> String:
+	var parts := PackedStringArray()
+	for i in range(data.size() / 2):
+		var re := data[i * 2]
+		var im := data[i * 2 + 1]
+		if not re:
+			parts.append("%s j" % absf(im))
+		elif im < 0:
+			parts.append("%s %s j" % [re, im])
+		else:
+			parts.append("%s + %s j" % [re, im])
+	return "[%s]" % ", ".join(parts)
 
-	for i in range(0, hN):
-		even[i] = amplitudes[i * 2]
-		odd[i] = amplitudes[i * 2 + 1]
 
-	even = fft(even)
-	odd = fft(odd)
+static func fft(data) -> PackedFloat64Array:
+	var packed: PackedFloat64Array = data if data is PackedFloat64Array else to_packed(data)
+	var n := packed.size() / 2
+	assert(n > 0 and (n & (n - 1)) == 0, "FFT size must be power of 2")
 
-	var a := -2.0 * PI
+	_bit_reverse_permute(packed, n)
 
-	for k in range(0, hN):
-		if not even[k] is Complex:
-			even[k] = Complex.new(even[k], 0)
-		if not odd[k] is Complex:
-			odd[k] = Complex.new(odd[k], 0)
+	var twiddles := _twiddle_table(n)
+	var half_m := 1
 
-		var p = k / float(N)
-		var t = Complex.new(0, a * p)
-		t.cexp(t).mul(odd[k], t)
+	while half_m < n:
+		var m := half_m * 2
+		var stride := n / m
 
-		var upper = Complex.new(0)
-		var lower = Complex.new(0)
-		even[k].add(t, upper)
-		even[k].sub(t, lower)
+		for k in range(0, n, m):
+			for j in range(half_m):
+				var t_idx := j * stride * 2
+				var wr := twiddles[t_idx]
+				var wi := twiddles[t_idx + 1]
 
-		amplitudes[k] = upper
-		amplitudes[k + hN] = lower
+				var u_idx := (k + j) * 2
+				var v_idx := (k + j + half_m) * 2
 
-	return amplitudes
+				var ur := packed[u_idx]
+				var ui := packed[u_idx + 1]
+				var vr := packed[v_idx]
+				var vi := packed[v_idx + 1]
+
+				var tr := wr * vr - wi * vi
+				var ti := wr * vi + wi * vr
+
+				packed[u_idx] = ur + tr
+				packed[u_idx + 1] = ui + ti
+				packed[v_idx] = ur - tr
+				packed[v_idx + 1] = ui - ti
+
+		half_m = m
+
+	return packed
+
+
+static func ifft(data) -> PackedFloat64Array:
+	var packed: PackedFloat64Array = data if data is PackedFloat64Array else to_packed(data)
+	var n := packed.size() / 2
+
+	for i in range(n):
+		packed[i * 2 + 1] = -packed[i * 2 + 1]
+
+	fft(packed)
+
+	var inv_n := 1.0 / n
+	for i in range(n):
+		packed[i * 2] = packed[i * 2] * inv_n
+		packed[i * 2 + 1] = -packed[i * 2 + 1] * inv_n
+
+	return packed
