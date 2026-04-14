@@ -1,153 +1,111 @@
 ![img](https://github.com/user-attachments/assets/50138c52-8833-4807-abe6-79773c4d1f1f)
 
-# Table of Contents
-
-1.  [Installation](#org8e2e1ee)
-2.  [Notes](#org88d7ed4)
-3.  [Reference](#org59f1579)
-    1.  [Public methods](#orgf8d976a)
-        1.  [`FFT.fft(data: Array<float>) -> Array<Complex>`](#org82c6d20)
-        2.  [`FFT.ifft(data: Array<Complex>) -> Array<Complex>`](#org8f8ba68)
-        3.  [`FFT.reals(data: Array<Complex>) -> Array<float>`](#org2446d66)
-        4.  [`FFT.imags(data: Array<Complex>) -> Array<float>`](#org38e4f06)
-        5.  [`FFT.ensure_complex(data: Array<MaybeComplex>) -> Array<Complex>`](#orgb19154d)
-    2.  [Internal methods](#orgae1faf8)
-        1.  [`FFT.conjugate(amplitudes: Array<Complex>) -> Array<Complex>`](#org757ca89)
-        2.  [`FFT.keyed(data: Array<Dictionary>, key: String) -> Data<Any>`](#orgf908bfc)
-
 [![img](https://awesome.re/mentioned-badge.svg)](https://github.com/godotengine/awesome-godot)
 ![img](https://img.shields.io/github/license/tavurth/godot-simple-fps-camera.svg)
 ![img](https://img.shields.io/github/repo-size/tavurth/godot-simple-fps-camera.svg)
 ![img](https://img.shields.io/github/languages/code-size/tavurth/godot-simple-fps-camera.svg)
 
-Fast Fourier Transform in GDScript
+Fast Fourier Transform in GDScript, ported from [the Rosetta Code JavaScript FFT](https://rosettacode.org/wiki/Fast_Fourier_transform#JavaScript).
 
-Mostly modified from [The javascript FFT on rosetta code](https://rosettacode.org/wiki/Fast_Fourier_transform#JavaScript).
+# Table of Contents
 
-<a id="org8e2e1ee"></a>
+1. [Installation](#installation)
+2. [Usage](#usage)
+3. [Notes](#notes)
+4. [Performance](#performance)
+5. [Reference](#reference)
 
 # Installation
 
-1.  Install addon
-2.  Enable plugin from the project-settings
+1. Install addon
+2. Enable plugin from project settings
 
-The singleton `FFT` is autoloaded at your project start, so you can simply call the static functionality as shown below.
+The singleton `FFT` is autoloaded at project start.
+
+# Usage
+
+Input can be a plain `Array` of floats or a `PackedFloat64Array` (interleaved `[re0, im0, re1, im1, ...]`).
+Output is always `PackedFloat64Array`.
 
 ```gdscript
-    var result = FFT.fft([1, 1, 1, 1, 0, 0, 0, 0])
-    result = FFT.fft(result)
+var result = FFT.fft([1, 1, 1, 1, 0, 0, 0, 0])
+print(FFT.pretty(result))
 
-    for item in result:
-    	item.log()
+var recovered = FFT.ifft(FFT.fft([1, 1, 1, 1, 0, 0, 0, 0]))
+print(FFT.to_reals(recovered))
 ```
-
-<a id="org88d7ed4"></a>
 
 # Notes
 
-This is an in-place modification for speed, so if you want to ensure functional purity you can duplicate your data array before passing it into the `fft` or `ifft` functionality. The data array is also returned.
+`fft` and `ifft` modify the input `PackedFloat64Array` in-place for speed.
+Pass a duplicate if you need the original preserved:
 
 ```gdscript
-    var my_arr = [1, 1, 1, 1, 0, 0, 0, 0]
-    var result = FFT.fft(my_arr.duplicate(true))
-    # my_arr remains unchanged
+var result = FFT.fft(my_packed.duplicate())
 ```
 
-## How fast is it?
-
-```shell
-fft(1024) x100: 134883 us total, 1348.8 us/call
-```
-
-~12x faster than the original recursive implementation, using iterative Cooley-Tukey
-with precomputed twiddle factors and `PackedFloat64Array` for zero-allocation butterflies.
-
-Alternately you can sample the data, so instead of taking every item you can take every `{5th}` item.
-
-This should also be thread safe, so you can run it in the background quite easily using:
+Thread safe. Twiddle factor cache uses a mutex on first population per size, after which reads are lock-free. Callers must ensure input arrays are not shared across threads.
 
 ```gdscript
-var _mutex := Mutex.new()
 var _thread := Thread.new()
 var _terminated := false
+var _mutex := Mutex.new()
+var _data: PackedFloat64Array
 
-var my_data := []
-
-func _thread_runner() -> void:
-    while not self._terminated:
-        OS.delay_msec(100)
-        mutex.lock()
-        FTT.ftt(my_data)
-        mutex.unlock()
+func _ready() -> void:
+    _thread.start(_thread_runner)
 
 func _exit_tree() -> void:
-    self.terminated = true
-    self._thread.wait_to_finish()
+    _terminated = true
+    _thread.wait_to_finish()
 
-func _ready() -> void:a
-    thread.start(Callable(self, "_thread_runner"))
+func _thread_runner() -> void:
+    while not _terminated:
+        OS.delay_msec(100)
+        _mutex.lock()
+        FFT.fft(_data)
+        _mutex.unlock()
 
 func _process(_delta: float) -> void:
     if not _mutex.try_lock():
         return
-
-    print(my_data)
-    self._mutex.unlock()
-
+    print(FFT.pretty(_data))
+    _mutex.unlock()
 ```
 
-<a id="org59f1579"></a>
+# Performance
+
+```shell
+fft(1024) x100: 127399 us total, 1274.0 us/call
+```
+
+12x faster than the original recursive implementation, using iterative Cooley-Tukey
+with precomputed twiddle factors and `PackedFloat64Array` for zero-allocation butterflies.
+
+For per-frame use at 60fps, N<=256 is recommended.
 
 # Reference
 
-<a id="orgf8d976a"></a>
-
 ## Public methods
 
-<a id="org82c6d20"></a>
+### `FFT.fft(data: Array | PackedFloat64Array) -> PackedFloat64Array`
 
-### `FFT.fft(data: Array<float>) -> Array<Complex>`
+Forward transformation from data-space into frequency-space.
 
-Forward transformation from data-space into fourier-space.
+### `FFT.ifft(data: Array | PackedFloat64Array) -> PackedFloat64Array`
 
-<a id="org8f8ba68"></a>
+Reverse transformation from frequency-space into data-space.
 
-### `FFT.ifft(data: Array<Complex>) -> Array<Complex>`
+### `FFT.to_packed(reals: Array) -> PackedFloat64Array`
 
-Reverse transformation from fourier-space into data-space.
+Converts a real-valued `Array` to interleaved complex `PackedFloat64Array`.
 
-<a id="org2446d66"></a>
+### `FFT.to_reals(data: PackedFloat64Array) -> PackedFloat64Array`
 
-### `FFT.reals(data: Array<Complex>) -> Array<float>`
+Extracts the real components from an interleaved complex array.
 
-Returns the real part of each data point.
+### `FFT.pretty(data: PackedFloat64Array) -> String`
 
-<a id="org38e4f06"></a>
-
-### `FFT.imags(data: Array<Complex>) -> Array<float>`
-
-Returns the imaginary part of each data point.
-
-<a id="orgb19154d"></a>
-
-### `FFT.ensure_complex(data: Array<MaybeComplex>) -> Array<Complex>`
-
-Ensure that all data items in the array are Complex numbers.
-
-<a id="orgae1faf8"></a>
-
-## Internal methods
-
-<a id="org757ca89"></a>
-
-### `FFT.conjugate(amplitudes: Array<Complex>) -> Array<Complex>`
-
-Flips the sign of each amplitude
-
-<a id="orgf908bfc"></a>
-
-### `FFT.keyed(data: Array<Dictionary>, key: String) -> Data<Any>`
-
-Returns data[idx][key] for each index.
+Returns a human-readable string of complex values for debugging.
 
 <a href="https://www.buymeacoffee.com/tavurth" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
