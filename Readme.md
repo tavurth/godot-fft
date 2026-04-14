@@ -1,4 +1,4 @@
-![img](./images/icon_long.png)
+![img](https://github.com/user-attachments/assets/50138c52-8833-4807-abe6-79773c4d1f1f)
 
 # Table of Contents
 

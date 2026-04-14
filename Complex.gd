@@ -47,3 +47,11 @@ func log():
 		prints(self.re, self.im, "j")
 	else:
 		print(self.re, "+", self.im, "j")
+
+
+func _to_string() -> String:
+	if not self.re:
+		return "%s j" % absf(self.im)
+	if self.im < 0:
+		return "%s %s j" % [self.re, self.im]
+	return "%s + %s j" % [self.re, self.im]

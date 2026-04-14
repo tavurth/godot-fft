@@ -8,6 +8,7 @@ extends Node
 
 const Complex = preload("Complex.gd")
 
+
 static func ensure_complex(maybe_complexes: Array) -> Array:
 	var to_return = []
 
@@ -80,7 +81,6 @@ static func fft(amplitudes: Array) -> Array:
 	var even = []
 	var odd = []
 
-	# Divide
 	even.resize(hN)
 	odd.resize(hN)
 
@@ -88,7 +88,6 @@ static func fft(amplitudes: Array) -> Array:
 		even[i] = amplitudes[i * 2]
 		odd[i] = amplitudes[i * 2 + 1]
 
-	# And conquer
 	even = fft(even)
 	odd = fft(odd)
 
@@ -97,20 +96,19 @@ static func fft(amplitudes: Array) -> Array:
 	for k in range(0, hN):
 		if not even[k] is Complex:
 			even[k] = Complex.new(even[k], 0)
-
 		if not odd[k] is Complex:
 			odd[k] = Complex.new(odd[k], 0)
 
 		var p = k / float(N)
 		var t = Complex.new(0, a * p)
-
 		t.cexp(t).mul(odd[k], t)
 
-		amplitudes[k] = even[k].add(t, odd[k])
-		amplitudes[k + hN] = even[k].sub(t, even[k])
+		var upper = Complex.new(0)
+		var lower = Complex.new(0)
+		even[k].add(t, upper)
+		even[k].sub(t, lower)
+
+		amplitudes[k] = upper
+		amplitudes[k + hN] = lower
 
 	return amplitudes
-
-# test code
-# print( cfft([1,1,1,1,0,0,0,0]) )
-# print( icfft(cfft([1,1,1,1,0,0,0,0])) )
