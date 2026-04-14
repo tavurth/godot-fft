@@ -13,7 +13,7 @@ config_version=5
 config/name="Godot-FFT demo"
 run/main_scene="uid://dgvfoxbg31l3j"
 config/features=PackedStringArray("4.4", "Forward Plus")
-config/icon="res://icon.svg"
+config/icon="uid://duixsp5r36xx0"
 
 [autoload]
 
