@@ -1,29 +1,31 @@
 extends Control
 class_name Spectrum
 
-const BAR_WIDTH := 16.0
-const BAR_SPACING := 2.0
-
-var _bars: Array[ColorRect] = []
 @onready var BAR_COUNT: int = find_parent("Demo").BAR_COUNT
+
+var _smoothed: PackedFloat32Array
 
 
 func _ready() -> void:
-	for i in range(BAR_COUNT):
-		var bar := ColorRect.new()
-		bar.color = Color.from_hsv(i / float(BAR_COUNT) * 0.75, 0.8, 0.9)
-		bar.size.x = BAR_WIDTH
-		add_child(bar)
-		_bars.append(bar)
+	_smoothed.resize(BAR_COUNT)
 
 
 func update(smoothed: PackedFloat32Array) -> void:
-	var bar_width := (size.x / BAR_COUNT) * 0.8
-	var spacing := (size.x / BAR_COUNT) * 0.2
+	if Engine.get_frames_drawn() & 1:
+		return
+	_smoothed = smoothed
+	queue_redraw()
+
+
+func _draw() -> void:
+	var w := size.x
 	var h := size.y
+	var bar_w := (w / BAR_COUNT) * 0.8
+	var gap := (w / BAR_COUNT) * 0.2
 
 	for i in range(BAR_COUNT):
-		var bar_h := smoothed[i] * h
-		_bars[i].size = Vector2(bar_width, bar_h)
-		_bars[i].position.x = i * (bar_width + spacing)
-		_bars[i].position.y = h - bar_h
+		var bar_h := _smoothed[i] * h
+		var x := i * (bar_w + gap)
+		draw_rect(
+			Rect2(x, h - bar_h, bar_w, bar_h), Color.from_hsv(i / float(BAR_COUNT) * 0.75, 0.8, 0.9)
+		)

@@ -13,6 +13,10 @@
 4. [Performance](#performance)
 5. [Reference](#reference)
 
+# When to use
+
+Pure GDScript, no dependencies, works everywhere. If you need performance and already use [NumDot](https://github.com/Ivorforce/NumDot/), use [nd.fft()](https://numdot.readthedocs.io/en/stable/classes/class_nd.html#class-nd-method-fft) instead.
+
 # Installation
 
 1. Install addon
@@ -76,9 +80,6 @@ func _process(_delta: float) -> void:
 ```shell
 fft(1024) x100: 127399 us total, 1274.0 us/call
 ```
-
-12x faster than the original recursive implementation, using iterative Cooley-Tukey
-with precomputed twiddle factors and `PackedFloat64Array` for zero-allocation butterflies.
 
 For per-frame use at 60fps, N<=256 is recommended.
 
