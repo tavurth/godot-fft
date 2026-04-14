@@ -1,0 +1,37 @@
+[gd_scene load_steps=5 format=3 uid="uid://dgvfoxbg31l3j"]
+
+[ext_resource type="Script" uid="uid://bysyl35qu7l6m" path="res://demo.gd" id="1_5hfv0"]
+[ext_resource type="AudioStream" uid="uid://bo0ghsl4yxkwk" path="res://output.wav" id="2_m0rpm"]
+[ext_resource type="Script" uid="uid://o2e12u6iji12" path="res://audio.gd" id="3_m0rpm"]
+[ext_resource type="Script" uid="uid://c4qu6egvvayh6" path="res://spectrum.gd" id="4_c6xj6"]
+
+[node name="Demo" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_5hfv0")
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+stream = ExtResource("2_m0rpm")
+script = ExtResource("3_m0rpm")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 80
+theme_override_constants/margin_top = 80
+theme_override_constants/margin_right = 80
+theme_override_constants/margin_bottom = 80
+
+[node name="Spectrum" type="Control" parent="MarginContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("4_c6xj6")

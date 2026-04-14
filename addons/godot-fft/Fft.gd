@@ -4,17 +4,17 @@
 
 extends Node
 
-static var _twiddles: Dictionary = {}
+var _twiddles: Dictionary = {}
 
-static var _mutex := Mutex.new()
+var _mutex := Mutex.new()
 
 
-static func _twiddle_table(n: int) -> PackedFloat64Array:
+func _twiddle_table(n: int) -> PackedFloat64Array:
 	if _twiddles.has(n):
 		return _twiddles[n]
 
 	_mutex.lock()
-	# double-check after acquiring — another thread may have beaten us
+	# double-check after acquiring: another thread may have beaten us
 	if not _twiddles.has(n):
 		var table := PackedFloat64Array()
 		table.resize(n)
@@ -28,7 +28,7 @@ static func _twiddle_table(n: int) -> PackedFloat64Array:
 	return _twiddles[n]
 
 
-static func _bit_reverse_permute(data: PackedFloat64Array, n: int) -> void:
+func _bit_reverse_permute(data: PackedFloat64Array, n: int) -> void:
 	var bits := int(log(n) / log(2))
 
 	for i in range(n):
@@ -46,7 +46,7 @@ static func _bit_reverse_permute(data: PackedFloat64Array, n: int) -> void:
 			data[j * 2 + 1] = im_i
 
 
-static func to_packed(reals: Array) -> PackedFloat64Array:
+func to_packed(reals: Array) -> PackedFloat64Array:
 	var out := PackedFloat64Array()
 	out.resize(reals.size() * 2)
 	for i in range(reals.size()):
@@ -55,7 +55,7 @@ static func to_packed(reals: Array) -> PackedFloat64Array:
 	return out
 
 
-static func to_reals(data: PackedFloat64Array) -> PackedFloat64Array:
+func to_reals(data: PackedFloat64Array) -> PackedFloat64Array:
 	var out := PackedFloat64Array()
 	out.resize(data.size() / 2)
 	for i in range(out.size()):
@@ -63,7 +63,7 @@ static func to_reals(data: PackedFloat64Array) -> PackedFloat64Array:
 	return out
 
 
-static func pretty(data: PackedFloat64Array) -> String:
+func pretty(data: PackedFloat64Array) -> String:
 	var parts := PackedStringArray()
 	for i in range(data.size() / 2):
 		var re := data[i * 2]
@@ -77,7 +77,7 @@ static func pretty(data: PackedFloat64Array) -> String:
 	return "[%s]" % ", ".join(parts)
 
 
-static func fft(data) -> PackedFloat64Array:
+func fft(data) -> PackedFloat64Array:
 	var packed: PackedFloat64Array = data if data is PackedFloat64Array else to_packed(data)
 	var n := packed.size() / 2
 	assert(n > 0 and (n & (n - 1)) == 0, "FFT size must be power of 2")
@@ -118,7 +118,7 @@ static func fft(data) -> PackedFloat64Array:
 	return packed
 
 
-static func ifft(data) -> PackedFloat64Array:
+func ifft(data) -> PackedFloat64Array:
 	var packed: PackedFloat64Array = data if data is PackedFloat64Array else to_packed(data)
 	var n := packed.size() / 2
 

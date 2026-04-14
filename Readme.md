@@ -5,8 +5,6 @@
 ![img](https://img.shields.io/github/repo-size/tavurth/godot-simple-fps-camera.svg)
 ![img](https://img.shields.io/github/languages/code-size/tavurth/godot-simple-fps-camera.svg)
 
-Fast Fourier Transform in GDScript, ported from [the Rosetta Code JavaScript FFT](https://rosettacode.org/wiki/Fast_Fourier_transform#JavaScript).
-
 # Table of Contents
 
 1. [Installation](#installation)
@@ -83,6 +81,35 @@ fft(1024) x100: 127399 us total, 1274.0 us/call
 with precomputed twiddle factors and `PackedFloat64Array` for zero-allocation butterflies.
 
 For per-frame use at 60fps, N<=256 is recommended.
+
+# Demo
+
+A real-time audio spectrum visualizer is included in `/demo`.
+
+<img width="688" height="464" alt="Screenshot 2026-04-14 at 16 47 59" src="https://github.com/user-attachments/assets/87ecbcb0-f5dc-48f0-8db9-5d8e24f2fe08" />
+
+It demonstrates FFT-based frequency analysis of a playing audio stream, rendered as a bar spectrum with log-spaced frequency bins and dB scaling.
+
+## How it works
+
+- `AudioPlayer` decodes the WAV stream to a mono PCM buffer and slices a sample window aligned to the current playback position, compensating for hardware output latency
+- `demo.gd` runs the FFT each frame, maps bins to log-spaced frequency bands, converts magnitude to dB, and smooths the result over time
+- `Spectrum` renders the smoothed values as colored bars scaled to the control's size
+
+## Running the demo
+
+1. Open `/demo/demo.tscn`
+2. Assign a WAV file (PCM, any sample rate) to the `AudioStreamPlayer` node
+3. Run the scene
+
+## Tuning
+
+| Constant    | Location  | Effect                                                                           |
+|-------------|-----------|----------------------------------------------------------------------------------|
+| `DB_FLOOR`  | `demo.gd` | Sensitivity: lower values (-60) show more, higher (-20) gate quiet signals       |
+| `SMOOTHING` | `demo.gd` | Temporal smoothing: lower is snappier, higher is silkier                         |
+| `FFT_SIZE`  | `demo.gd` | Frequency resolution vs. CPU cost: must be power of 2, ≤256 recommended at 60fps |
+| `BAR_COUNT` | `demo.gd` | Number of frequency bands displayed                                              |
 
 # Reference
 

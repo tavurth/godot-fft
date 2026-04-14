@@ -2,9 +2,9 @@
 extends EditorPlugin
 
 
-func _enter_tree():
+func _enable_plugin() -> void:
 	add_autoload_singleton("FFT", "res://addons/godot-fft/Fft.gd")
 
 
-func _exit_tree():
+func _disable_plugin() -> void:
 	remove_autoload_singleton("FFT")
